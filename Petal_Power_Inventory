@@ -1,0 +1,39 @@
+# In this challenge I'm a data analyst for a chain of gardening stores called Petal Power. I need to help them analyze their data.
+
+import codecademylib
+# First I need to import the libraries that I am going to need 
+import numpy as np
+import pandas as pd
+
+# ANSWERING CUSTOMER EMAILS
+
+# Now I need to import the data and save it to inventroy from their inventory.csv
+inventory = pd.read_csv('inventory.csv')
+# Now I'll take a look at their first 10 rows, which represent the data from Staten Island, and save it to it's own variable
+staten_island = inventory.head(10)
+#print(staten_island)
+
+# A customer just emailed asking what products are sold at our Staten Island location. 
+product_request = staten_island['product_description']
+#print(product_request)
+
+# Another customer emailed to ask what types of seeds are sold at the Brooklyn location
+seed_request = inventory[(inventory.location == 'Brooklyn') & (inventory.product_type == 'seeds')]
+#print(seed_request)
+
+# INVENTORY
+
+# Now I want to check my inventory for each product, so I'll add a column called in_stock and mark True if in stock and False if the quantity is 0
+inventory['in_stock'] = inventory.apply(lambda row: 'True' if row.quantity > 0 else 'False', axis=1)
+#print(inventory)
+
+# Now we want to see the value of their current inventory or each row
+inventory['total_value'] = inventory.quantity * inventory.price
+#print(inventory)
+
+# The Marketing Dept wants a complete description of each product for their catalog.
+combine_lambda = lambda row: \
+    '{} - {}'.format(row.product_type,
+                     row.product_description)
+inventory['full_description'] = inventory.apply(combine_lambda, axis=1)
+#print(inventory)
