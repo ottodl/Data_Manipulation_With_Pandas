@@ -1,0 +1,72 @@
+import codecademylib
+import pandas as pd
+ad_clicks = pd.read_csv('ad_clicks.csv')
+
+# ANALYZING AD SOURCES
+
+# First I need to just look at the DataFrame to see how it's structured and what's in it.
+#print(ad_clicks.head())
+
+# The manager wants to know which ad platform is getting the most views. 
+ad_view_count = ad_clicks.groupby('utm_source').user_id.count()
+#print(ad_view_count)
+
+# If the column ad_click_timestamp is not null, then someone actually clicked on the ad that was displayed. Ad a colimn is_click which displays True if not null and False otherwise.
+ad_clicks['is_click'] = ~ad_clicks.ad_click_timestamp.isnull()
+#print(ad_clicks)
+
+# I want to know the percent of people who clicked on ads from each utm_source.
+# I'll start by grouping utm_source and is_click, counting the number of user_id in each group
+clicks_by_source = ad_clicks.groupby(['utm_source', 'is_click'])['user_id'].count().reset_index()
+#print(clicks_by_source)
+
+# Now I'll pivot the data so that the colimns are is_click (either True or False), the index is utm_source, and values are user_id
+clicks_pivot = clicks_by_source.pivot(columns='is_click', index='utm_source', values='user_id').reset_index()
+#print(clicks_pivot)
+
+# Now I'll create a new column in clicks pivot called percent_clicked, calculating the percent based on the numbers in the two columns
+clicks_pivot['percent_clicked'] = clicks_pivot[True] / (clicks_pivot[True] + clicks_pivot[False])
+#print(clicks_pivot)
+
+# ANALYZING AN A/B TEST
+
+# First I want to see is roughly the same number of people were shown Ad A and Ad B.
+ad_breakdown = ad_clicks.groupby('experimental_group').user_id.count()
+#print(ad_breakdown)
+
+# Now I can see if a greater percentage of users clicked on Ad A or Ad B.
+num_each_ad_clicks = ad_clicks.groupby(['experimental_group', 'is_click'])['user_id'].count().reset_index()
+#print(num_each_ad_clicks)
+num_each_ad_clicks_pivot = num_each_ad_clicks.pivot(columns='is_click', index='experimental_group', values='user_id').reset_index()
+#print(num_each_ad_clicks_pivot)
+
+# The Product Manager for the A/B test thinks that the clicks might have changed by the day of the week
+# First I'll create two DataFrames: a_clicks, and b_clicks, which contain only the results for A group and B group.
+a_clicks = ad_clicks[ad_clicks.experimental_group == 'A']
+b_clicks = ad_clicks[ad_clicks.experimental_group == 'B']
+#print(a_clicks)
+
+# Now I'm, for each group, going to calculate the percent of users who clicked on the ad by day.
+a_clicks_by_day = a_clicks.groupby(['is_click', 'day']).user_id.count().reset_index()
+#print(a_clicks_by_day)
+b_clicks_by_day = b_clicks.groupby(['is_click', 'day']).user_id.count().reset_index()
+# Now I'm going to pivot both of these, so that I can then calculate the percentage
+a_clicks_by_day_pivot = a_clicks_by_day.pivot(columns='is_click', index='day', values='user_id').reset_index()
+#print(a_clicks_by_day_pivot)
+b_clicks_by_day_pivot = b_clicks_by_day.pivot(columns='is_click', index='day', values='user_id').reset_index()
+#print(b_clicks_by_day_pivot
+
+# Now I need to add a column that create the percent average clicks for each day
+a_clicks_by_day_pivot['percent_clicked'] = a_clicks_by_day_pivot[True] / (a_clicks_by_day_pivot[True] + a_clicks_by_day_pivot[False])
+print(a_clicks_by_day_pivot)
+b_clicks_by_day_pivot['percent_clicked'] = b_clicks_by_day_pivot[True] / (b_clicks_by_day_pivot[True] + b_clicks_by_day_pivot[False])
+#print(b_clicks_by_day_pivot)
+
+# Now I can finally find the over all percentage for each
+a_clicks_percentage = a_clicks_by_day_pivot.percent_clicked.mean()
+b_clicks_percentage = b_clicks_by_day_pivot.percent_clicked.mean()
+print(a_clicks_percentage)
+print(b_clicks_percentage)
+
+# Based on these results it's clear that the company should go with Ad A which performed 5 % better than Ad B.
+# Furthermore, Thursdays are the day when the Ad A performed marginally better.
