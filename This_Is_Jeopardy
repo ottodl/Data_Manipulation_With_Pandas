@@ -1,0 +1,33 @@
+import pandas as pd
+pd.set_option('display.max_colwidth', -1)
+
+# Before I can do anything I need to download my csv into python, and take a look at what I'm working with.
+jeopardy_df = pd.read_csv('jeopardy.csv')
+#print(jeopardy_df.info())
+# There are two things that stand out to me. One: There are spaces before all of the columns. Two: The column names do not follow standard naming convention. I will need to correct both of these things.
+# The ohter thing that stands out to me is that there are the same number of enteries for every column, and no null entries (which is good for later analysis)
+jeopardy_df.rename(columns={'Show Number': 'show_number', ' Air Date': 'air_date', ' Round': 'round', ' Category': 'category', ' Value': 'value', ' Question': 'question', ' Answer': 'answer'}, inplace=True)
+#print(jeopardy_df.info())
+
+# First I need to write a function that filters the dataset for questions that conrtains all of the words in a list of words.
+def filtered_data(data, words):
+  filter_df = lambda x: all(word.lower() in x.lower() for word in words)
+  return data.loc[data['question'].apply(filter_df)]
+
+# Now I'm going to test my function
+filtered_king_england = filtered_data(jeopardy_df, ['King', 'England'])
+#print(filtered['question'])
+
+# Because I might want to find some aggregate statistics on the value column, I need to make sure to convert the data in value column from strings into floats.
+# The first thing that I need to do is to strip the $ and , from the each cell in the value column
+jeopardy_df['value'] = jeopardy_df['value'].map(lambda x: x.lstrip('$'))
+jeopardy_df['value'] = jeopardy_df.replace(',', '', regex=True)
+#print(jeopardy_df.value) # to inspect and make sure it worked
+# Now I need to convert all the strings into float values
+jeopardy_df['value'] = pd.to_numeric(jeopardy_df['value'], downcast='float')
+#print(jeopardy_df.value) # to check to make sure it worked
+
+# Now I need to write a function that returns the count of the unique answers to all the questions in a dataset.
+def count_unique_answers(data):
+  return data['answer'].value_counts()
+#print(count_unique_answers(filtered_king_england)) to test it
