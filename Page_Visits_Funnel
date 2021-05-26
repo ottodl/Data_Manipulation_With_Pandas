@@ -67,3 +67,4 @@ all_data['time_to_purchase'] = \
     all_data.visit_time
 # Now I can get the average time by using the mean() method on the new time_to_purchase column.
 print(all_data.time_to_purchase.mean())
+
