@@ -1,0 +1,80 @@
+import pandas as pd
+import numpy as np
+import matplotlib.pyplot as plt
+import codecademylib3_seaborn
+import glob
+
+# INSPECT THE DATA!
+
+# The first visualization my boss wants me to make is a scatterplot that shows average income in a state vs proportion of women in that state.
+
+# The first thing that I need to do is to loop through the census files and load them into a DataFrame using glob. Then I'll concatenate those DataFrames together into one called us_census
+
+files = glob.glob('states*.csv')
+
+df_list = []
+for filename in files:
+  data = pd.read_csv(filename)
+  df_list.append(data)
+
+us_census = pd.concat(df_list)
+# Now I need to inspect the data in order to see that dtypes and ther relevent information that I need so that I know what I will need to convert and edit so that I can perform my analysis.
+#print(us_census.columns)
+#print(us_census.describe())
+#print(us_census.info())
+#print(len(us_census))
+#print(us_census.head())
+# Things that I noticed; 
+#   there are no NaN data. 
+#   each of the demographic columns rows end with a %, we should remove that and turn them into floats. 
+#   Income column: each row starts with a $ and should be removed
+#   GenderPop: Needs to be split out into two new colimns, men and women, with melt()
+#   I need to rename all of the columns to, in order, id state total_pop hispanic white black native asain pacific income pop_by_gender
+
+# REGEX TO THE RESCUE
+
+# First I'm going to regex on the Income column to format it into numerical values.
+us_census.Income = us_census['Income'].replace('[$]', '', regex=True)
+us_census.Income = pd.to_numeric(us_census['Income'])
+#print(us_census.head()) # to make sure it worked
+split_gender_pop = us_census['GenderPop'].str.split('_')
+us_census['men'] = split_gender_pop.str.get(0)
+us_census['women'] = split_gender_pop.str.get(1)
+#print(us_census.head()) # to make sure the split was successful
+# Now I need to remove the M and F from the new rows respectivly.
+us_census.men = us_census['men'].replace('M', '', regex=True)
+us_census.women = us_census['women'].replace('F', '', regex=True)
+#print(us_census.head()) # to make sure that it worked
+# Now I can convert both men and women columns into floats.
+us_census.men = pd.to_numeric(us_census.men)
+us_census.women = pd.to_numeric(us_census.women)
+#print(us_census.dtypes) # to make sure it worked
+# Now I need to save our DataFrame with all the columns we leave, excluding the original GenderPop column
+us_census = us_census[['Unnamed: 0', 'State', 'TotalPop', 'Hispanic', 'White', 'Black', 'Native', 'Asian', 'Pacific', 'Income', 'men', 'women']]
+#print(us_census) # to make sure it worked
+# Now I can finally rename all of the columns to names that will be better for me
+us_census.columns = ['id', 'state', 'total_pop', 'percent_hispanic', 'percent_white', 'percent_black', 'percent_native', 'percent_asian', 'percent_pacific', 'income', 'men', 'women']
+#print(us_census.head()) # to make sure it worked
+
+# Now that I have a tidy DataFrame I can use matplotlib to make a scatterplot
+women_income_scatter = plt.scatter(us_census.women, us_census.income) 
+plt.show(women_income_scatter)
+
+# HISTOGRAMS OF RACE
+
+# Now my boss wants make a bunch of histograms out of the race data. 
+# The first thing that I have to do is remove the % character from each of the race columns
+us_census.percent_hispanic = us_census['percent_hispanic'].replace('[%]', '', regex=True)
+us_census.percent_white = us_census['percent_white'].replace('[%]', '', regex=True)
+us_census.percent_black = us_census['percent_black'].replace('[%]', '', regex=True)
+us_census.percent_native = us_census['percent_native'].replace('[%]', '', regex=True)
+us_census.percent_asian = us_census['percent_asian'].replace('[%]', '', regex=True)
+us_census.percent_pacific = us_census['percent_pacific'].replace('[%]', '', regex=True)
+#print(us_census.head()) # to make sure it works
+# Histograph for hispanic
+hispanic_income_scatter = plt.scatter(us_census.percent_hispanic, us_census.income) 
+plt.show(hispanic_income_scatter)
+# Histograph for white
+white_income_scatter = plt.scatter(us_census.percent_white, us_census.income) 
+plt.show(white_income_scatter)
+
