@@ -70,3 +70,4 @@ print(b_clicks_percentage)
 
 # Based on these results it's clear that the company should go with Ad A which performed 5 % better than Ad B.
 # Furthermore, Thursdays are the day when the Ad A performed marginally better.
+
